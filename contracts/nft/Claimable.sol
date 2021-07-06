@@ -1,8 +1,8 @@
 pragma solidity ^0.8.0;
 
-import '../ecosystem/openzeppelin/access/Ownable.sol';
 import "../interfaces/ILiquidityMigration.sol";
-import "../interfaces/IRoot1155.sol";
+import '../ecosystem/openzeppelin/access/Ownable.sol';
+import '../ecosystem/openzeppelin/token/ERC1155/IERC1155.sol';
 
 contract Claimable is Ownable {
 
@@ -35,7 +35,6 @@ contract Claimable is Ownable {
         collection = _collection;
         migration = _migration;
     }
-
 
     function claim(address _strategy)
         public
