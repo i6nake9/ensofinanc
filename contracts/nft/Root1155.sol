@@ -87,13 +87,24 @@ contract Root1155 is ERC1155, Ownable {
     }
 
     /**
+    * @return uint256 for max token ID
+    */
+    function getMaxTokenID() 
+        public 
+        view
+        returns(uint256)
+    {
+        return _currentTokenID;
+    }
+
+    /**
     * @dev calculates the next token ID based on value of _currentTokenID
     * @return uint256 for the next token ID
     */
     function _getNextTokenID() private view returns (uint256) {
         return _currentTokenID + 1;
     }
-
+    
     /**
     * @dev increments the value of _currentTokenID
     */

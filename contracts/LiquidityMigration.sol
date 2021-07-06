@@ -92,6 +92,18 @@ contract LiquidityMigration {
     function getStake(address account, address strategyToken) public view returns (Stake memory stake) {
         stake = stakes[account][strategyToken];
     }
+
+    function hasStaked(address account, address strategyToken) 
+        public
+        view
+        returns(bool, uint256)
+    {
+        Stake storage stake = stakes[account][strategyToken];
+        return(
+            stake.amount > 0,
+            uint256(stake.protocol)
+        );
+    }
 }
 
 // Enso::StrategyController

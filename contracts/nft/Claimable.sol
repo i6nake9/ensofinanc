@@ -1,12 +1,9 @@
 pragma solidity ^0.8.0;
 
 import '../ecosystem/openzeppelin/access/Ownable.sol';
-import "../ecosystem/openzeppelin/token/ERC1155/IERC1155.sol";
 import "../interfaces/ILiquidityMigration.sol";
+import "../interfaces/IRoot1155.sol";
 
-/**
- * @title Claimable
- */
 contract Claimable is Ownable {
 
     enum State {
@@ -14,15 +11,14 @@ contract Claimable is Ownable {
         Active,
         Closed
     }
+    State public _state;
 
-    State private _state;
-    
     address public migration;
-    address public collection; // update()
+    address public collection;
 
-    mapping (uint8=>bool) public claimed; // protocol = false/true
+    mapping (uint256 => bool) public claimed;
 
-    event StateChange(uint8 old, uint8 updated);
+    event Claimed(address indexed account, uint256 protocol);
 
     /**
     * @dev Require particular state
@@ -32,42 +28,26 @@ contract Claimable is Ownable {
         _;
     }
 
-    // assumption is enum ID will be the same as collection ID
+    /* assumption is enum ID will be the same as collection ID, 
+     * and no further collections will be added whilst active
+    */
     constructor(address _migration, address _collection){
         collection = _collection;
         migration = _migration;
     }
 
+
     function claim(address _strategy)
         public
         onlyState(State.Active)
     {
-        (uint256 amount, , uint8 protocol ) = ILiquidityMigration(migration).getStake(msg.sender, _strategy);
+        (bool staked, uint256 protocol) = ILiquidityMigration(migration).hasStaked(msg.sender, _strategy);
+        require(staked, "Claimable: Has not staked");
         require(!claimed[protocol], "Claimable: already claimed");
-        require(amount > 0, "Claimable: Has not staked");
         require(IERC1155(collection).balanceOf(address(this), protocol) > 0, "Claimable: no NFTs left");
         claimed[protocol] = true;
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, protocol, 1, "");
     }
-
-    function stateChange(State state_)
-        public
-        onlyOwner
-    {
-        //emit StateChange(_state, state_);
-        _state = state_;
-    }
-
-
-    // user specific
-    //function claimed(address protocol) {}
-    
-    // overall
-    //function available(address protocol) {}
-
-    /*
-        Keep track
-    */
 
     /**
      * @return The current state of the escrow.
@@ -76,8 +56,3 @@ contract Claimable is Ownable {
         return _state;
     }
 }
-
-/*
-    1. mint to this address
-
-*/
