@@ -5,7 +5,6 @@ import "../ecosystem/openzeppelin/access/Ownable.sol";
 import "../interfaces/IRoot1155.sol";
 
 contract Claimable is Ownable {
-
     enum State {
         Pending,
         Active,
@@ -94,7 +93,6 @@ contract Claimable is Ownable {
     {
         _stateChange(state_);
     }
-
 
     /**
      * @return max claimable
