@@ -37,11 +37,15 @@ contract Claimable is Ownable {
         migration = _migration;
     }
 
-    function claim(address _strategy)
+    /**
+     * @notice claim NFT for staking LP
+     * @param _strategyToken address of strategy
+     */
+    function claim(address _strategyToken)
         public
         onlyState(State.Active)
     {
-        (bool staked, uint256 protocol) = ILiquidityMigration(migration).hasStaked(msg.sender, _strategy);
+        (bool staked, uint256 protocol) = ILiquidityMigration(migration).hasStaked(msg.sender, _strategyToken);
         require(staked, "Claimable: Has not staked");
         require(!claimed[protocol], "Claimable: already claimed");
         require(IERC1155(collection).balanceOf(address(this), protocol) > 0, "Claimable: no NFTs left");
@@ -49,6 +53,9 @@ contract Claimable is Ownable {
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, protocol, 1, "");
     }
     
+    /**
+     * @notice you wanna be a masta good old boi?
+     */
     function master() 
         public
         onlyState(State.Active)
@@ -60,6 +67,9 @@ contract Claimable is Ownable {
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, max(), 1, "");
     }
 
+    /**
+     * @notice we wipe it, and burn all - should have got in already
+     */
     function wipe() 
         public
         onlyOwner
@@ -75,6 +85,9 @@ contract Claimable is Ownable {
         }
     }
 
+    /**
+     * @notice emergency
+     */
     function stateChange(State state_)
         public
         onlyOwner
@@ -82,14 +95,10 @@ contract Claimable is Ownable {
         _stateChange(state_);
     }
 
-    function _stateChange(State state_) 
-        private
-    {
-        require(_state != state_, "Claimable#changeState: current");
-        _state = state_;
-        emit StateChange(uint8(_state));
-    }
 
+    /**
+     * @return max claimable
+     */
     function max() 
         public
         view
@@ -99,9 +108,17 @@ contract Claimable is Ownable {
     }
 
     /**
-     * @return The current state of the escrow.
+     * @return current state.
      */
     function state() public view virtual returns (State) {
         return _state;
+    }
+
+    function _stateChange(State state_) 
+        private
+    {
+        require(_state != state_, "Claimable#changeState: current");
+        _state = state_;
+        emit StateChange(uint8(_state));
     }
 }
