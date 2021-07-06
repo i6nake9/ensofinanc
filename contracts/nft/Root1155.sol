@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 
 import '../ecosystem/openzeppelin/access/Ownable.sol';
-import '../ecosystem/openzeppelin/token/ERC1155/ERC1155.sol';
+import '../ecosystem/openzeppelin/token/ERC1155/extensions/ERC1155Burnable.sol';
 
 /**
  * @title Root1155
  */
-contract Root1155 is ERC1155, Ownable {
+contract Root1155 is ERC1155Burnable, Ownable {
 
     uint256 private _currentTokenID = 0;
     mapping (uint256 => address) public creators;
