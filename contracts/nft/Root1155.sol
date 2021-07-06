@@ -11,16 +11,12 @@ contract Root1155 is ERC1155, Ownable {
     uint256 private _currentTokenID = 0;
     mapping (uint256 => address) public creators;
     mapping (uint256 => uint256) public tokenSupply;
-    // Contract name
-    string public name;
-    // Contract symbol
-    string public symbol;
 
     /**
     * @dev Require msg.sender to be the creator of the token id
     */
     modifier creatorOnly(uint256 _id) {
-        require(creators[_id] == msg.sender, "ERC1155Tradable#creatorOnly: ONLY_CREATOR_ALLOWED");
+        require(creators[_id] == msg.sender, "Root1155#creatorOnly: ONLY_CREATOR_ALLOWED");
         _;
     }
 
@@ -28,7 +24,7 @@ contract Root1155 is ERC1155, Ownable {
     * @dev Require msg.sender to own more than 0 of the token id
     */
     modifier ownersOnly(uint256 _id) {
-        require(balanceOf(msg.sender, _id) > 0, "ERC1155Tradable#ownersOnly: ONLY_OWNERS_ALLOWED");
+        require(balanceOf(msg.sender, _id) > 0, "Root1155#ownersOnly: ONLY_OWNERS_ALLOWED");
         _;
     }
 
