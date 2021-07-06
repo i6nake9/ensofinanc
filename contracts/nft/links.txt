@@ -1,0 +1,3 @@
+
+IPFS config folder:
+ - https://forum.openzeppelin.com/t/how-to-erc-1155-id-substitution-for-token-uri/3312/5
