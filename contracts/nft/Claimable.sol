@@ -64,6 +64,7 @@ contract Claimable is Ownable {
         require(!claimed[msg.sender][max()], "Claimable#master: claimed");
         for (uint256 i = 0; i < max(); i++) {
             require(claimed[msg.sender][i], "Claimable#master: not all");
+            require(IERC1155(collection).balanceOf(msg.sender, i) > 0, "Claimable#master: not holding");
         }
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, max(), 1, "");
     }
