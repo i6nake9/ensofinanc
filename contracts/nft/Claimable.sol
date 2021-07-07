@@ -15,7 +15,7 @@ contract Claimable is Ownable {
     address public migration;
     address public collection;
 
-    mapping (uint256 => bool) public claimed;
+    mapping (address => mapping (uint256 => bool)) claimed;
 
     event Claimed(address indexed account, uint256 protocol);
     event StateChange(uint8 changed);
@@ -48,9 +48,9 @@ contract Claimable is Ownable {
     {
         (bool staked, uint256 protocol) = ILiquidityMigration(migration).hasStaked(msg.sender, _strategyToken);
         require(staked, "Claimable: Has not staked");
-        require(!claimed[protocol], "Claimable: already claimed");
+        require(!claimed[msg.sender][protocol], "Claimable: already claimed");
         require(IERC1155(collection).balanceOf(address(this), protocol) > 0, "Claimable: no NFTs left");
-        claimed[protocol] = true;
+        claimed[msg.sender][protocol] = true;
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, protocol, 1, "");
     }
     
@@ -61,9 +61,9 @@ contract Claimable is Ownable {
         public
         onlyState(State.Active)
     {
-        require(!claimed[max()], "Claimable#master: claimed");
+        require(!claimed[msg.sender][max()], "Claimable#master: claimed");
         for (uint256 i = 0; i < max(); i++) {
-            require(claimed[i], "Claimable#master: not all");
+            require(claimed[msg.sender][i], "Claimable#master: not all");
         }
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, max(), 1, "");
     }
