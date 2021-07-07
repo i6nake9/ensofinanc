@@ -19,6 +19,8 @@ contract Claimable is Ownable {
 
     event Claimed(address indexed account, uint256 protocol);
     event StateChange(uint8 changed);
+    event Migration(address migration);
+    event Collection(address collection);
 
     /**
     * @dev Require particular state
@@ -85,13 +87,38 @@ contract Claimable is Ownable {
     }
 
     /**
-     * @notice emergency
+     * @notice emergency from deployer change state
+     * @param state_ to change to
      */
     function stateChange(State state_)
         public
         onlyOwner
     {
         _stateChange(state_);
+    }
+
+    /**
+     * @notice emergency from deployer change migration
+     * @param _migration to change to
+     */
+    function updateMigration(address _migration)
+        public
+        onlyOwner
+    {
+        migration = _migration;
+        emit Migration(migration);
+    }
+
+    /**
+     * @notice emergency from deployer change migration
+     * @param _collection to change to
+     */
+    function updateCollection(address _collection)
+        public
+        onlyOwner
+    {
+        collection = _collection;
+        emit Collection(collection);
     }
 
     /**
