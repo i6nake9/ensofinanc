@@ -1,10 +1,14 @@
 import { ethers } from "hardhat";
 import { Signers } from "../../types";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { Contract } from "ethers";
 
 describe('claimable', () => {
-    
+    let accounts: SignerWithAddress[],
+        claimable: Contract
+
+
     beforeEach(async () => {
-        this.signers = {} as Signers;
-        this.Token = await ethers.getContractFactory("Token");
+        accounts = await ethers.getSigners();
     });
 });
