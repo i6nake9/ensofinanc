@@ -72,10 +72,7 @@ contract Claimable is Ownable {
     /**
      * @notice we wipe it, and burn all - should have got in already
      */
-    function wipe(
-        // index start/ending
-        // id
-    ) 
+    function wipe() 
         public
         onlyOwner
     {
