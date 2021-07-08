@@ -39,13 +39,13 @@ describe('claimable', () => {
                 expect(await claimable.migration()).to.equal(liquidityMigration.address);
             });
         });
-        // describe('stateChange', () => {
-        //     describe('non-functional', () => {
-        //         it('not from owner', async () => {
-        //             // await expect(claimable.connect(attacker).stateChange(state[1]))
-        //             // .to.be.revertedWith('Ownable: caller is not the owner')
-        //         });
-        //     });
-        // });
+        describe('stateChange', () => {
+            describe('non-functional', () => {
+                it('not from owner', async () => {
+                    await expect(claimable.connect(attacker).stateChange(state[1]))
+                    .to.be.revertedWith('Ownable: caller is not the owner')
+                });
+            });
+        });
     });
 });
