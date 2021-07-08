@@ -10,7 +10,7 @@ contract Claimable is Ownable {
         Active,
         Closed
     }
-    State public _state;
+    State private _state;
 
     address public migration;
     address public collection;
@@ -72,17 +72,17 @@ contract Claimable is Ownable {
     /**
      * @notice we wipe it, and burn all - should have got in already
      */
-    function wipe() 
+    function wipe(uint256 _start, uint256 _end, uint8 _id)
         public
         onlyOwner
     {
-        _stateChange(State.Closed);
-        for (uint256 i = 0; i < max(); i++) {
+        require(_end <= max(), "Claimable#Wipe: out of bounds");
+        for (uint256 start = _start; start < _end; start++) {
             IRoot1155(collection).
             burn(
                 address(this), 
-                i, 
-                IERC1155(collection).balanceOf(address(this), i)
+                start,
+                IERC1155(collection).balanceOf(address(this), _id)
             );
         }
     }
