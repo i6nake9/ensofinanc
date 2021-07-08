@@ -4,6 +4,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { assert } from "console";
 import { expect } from "chai";
 import { ERC1155, IERC1155, Root1155 } from "../../typechain";
+import { AsyncLocalStorage } from "async_hooks";
 
 
 describe('claimable', () => {
@@ -78,7 +79,13 @@ describe('claimable', () => {
                 });
             });
             describe('functional', () => {
-                
+                before(async () => {
+                    await claimable.updateMigration(changeTo.address)
+                });
+                it('migration updated', async () => {
+                    console.log(await claimable.migration())
+                    expect(await claimable.migration()).to.equal(changeTo.address)
+                });
             });
         });
         describe('updateCollection', () => {
@@ -97,7 +104,12 @@ describe('claimable', () => {
                 });
             });
             describe('functional', () => {
-                
+                before(async () => {
+                    await claimable.updateCollection(changeTo.address)
+                });
+                it('collection updated', async () => {
+                    expect(await claimable.collection()).to.equal(changeTo.address)
+                });
             });
         });
 
