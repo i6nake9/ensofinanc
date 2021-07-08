@@ -106,6 +106,7 @@ contract Claimable is Ownable {
         public
         onlyOwner
     {
+        require(_migration != migration, 'Claimable#UpdateMigration: exists');
         migration = _migration;
         emit Migration(migration);
     }
@@ -118,6 +119,7 @@ contract Claimable is Ownable {
         public
         onlyOwner
     {
+        require(_collection != collection, 'Claimable#UpdateCollection: exists');
         collection = _collection;
         emit Collection(collection);
     }
