@@ -6,6 +6,7 @@ import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
+import "@openzeppelin/test-helpers"
 import "@typechain/hardhat";
 import "hardhat-etherscan-abi";
 import "solidity-coverage";
