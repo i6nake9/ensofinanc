@@ -8,6 +8,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
 import "hardhat-etherscan-abi";
+// import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "./tasks/accounts";
 import "./tasks/clean";
@@ -194,6 +195,9 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v5",
   },
+  // gasReporter: {
+  //   enabled: (process.env.REPORT_GAS) ? true : false
+  // },
 };
 
 export default config;

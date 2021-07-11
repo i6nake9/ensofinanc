@@ -1,10 +1,11 @@
 pragma solidity ^0.8.0;
 
+import "../interfaces/IRoot1155.sol";
 import "../interfaces/ILiquidityMigration.sol";
 import "../ecosystem/openzeppelin/access/Ownable.sol";
-import "../interfaces/IRoot1155.sol";
+import "../ecosystem/openzeppelin/token/ERC1155/utils/ERC1155Holder.sol";
 
-contract Claimable is Ownable {
+contract Claimable is Ownable, ERC1155Holder {
     enum State {
         Pending,
         Active,
@@ -15,7 +16,7 @@ contract Claimable is Ownable {
     address public migration;
     address public collection;
 
-    mapping (address => mapping (uint256 => bool)) claimed;
+    mapping (address => mapping (uint256 => bool)) public claimed;
 
     event Claimed(address indexed account, uint256 protocol);
     event StateChange(uint8 changed);
@@ -46,10 +47,11 @@ contract Claimable is Ownable {
         public
         onlyState(State.Active)
     {
+        require(_strategyToken != address(0), "Claimable#claim: empty address");
         (bool staked, uint256 protocol) = ILiquidityMigration(migration).hasStaked(msg.sender, _strategyToken);
-        require(staked, "Claimable: Has not staked");
-        require(!claimed[msg.sender][protocol], "Claimable: already claimed");
-        require(IERC1155(collection).balanceOf(address(this), protocol) > 0, "Claimable: no NFTs left");
+        require(staked, "Claimable#claim: Has not staked");
+        require(!claimed[msg.sender][protocol], "Claimable#claim: already claimed");
+        require(IERC1155(collection).balanceOf(address(this), protocol) > 0, "Claimable#claim: no NFTs left");
         claimed[msg.sender][protocol] = true;
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, protocol, 1, "");
     }
@@ -67,6 +69,17 @@ contract Claimable is Ownable {
             require(IERC1155(collection).balanceOf(msg.sender, i) > 0, "Claimable#master: not holding");
         }
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, max(), 1, "");
+    }
+
+    function claimAll(address[] memory _strategy)
+        public
+    {
+        for (uint256 i = 0; i < _strategy.length; i++) {
+            claim(_strategy[i]);
+        }
+        if(_strategy.length == 4){
+            master();
+        }
     }
 
     /**
