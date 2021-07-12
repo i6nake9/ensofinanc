@@ -45,7 +45,7 @@ contract Root1155 is ERC1155Burnable, Ownable {
         bytes calldata _data
     ) external onlyOwner returns (uint256) {
 
-        uint256 _id = _getNextTokenID();
+        uint256 _id = _currentTokenID;
         _incrementTokenTypeId();
         creators[_id] = msg.sender;
 

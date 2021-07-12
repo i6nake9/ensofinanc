@@ -16,7 +16,7 @@ describe('claimable', () => {
         claimable: Contract,
         liquidityMigration: Contract,
         erc1155: Contract,
-        strategy: Contract,
+        strategies: Contract[],
         initialURI = 'https://token-cdn-domain/{id}.json',
         state = [0, 1, 2], // 0 = pending, 1 = active, 2 = closed
         name = 'degen',
@@ -24,12 +24,14 @@ describe('claimable', () => {
         supply = 100,
         emptyAddress = "0x0000000000000000000000000000000000000000",
         stake = (10 * decimals),
-        protocols = [1, 2, 3, 4, 5, 6, 7] // 1 = dpi, 2 = TS, 3=enz, 4=ind, 5=pie, 6= bask, 7=master
+        protocols = [0, 1, 2, 3, 4, 5], // 0 = dpi, 1 = TS, 2=enz, 3=ind, 4=pie, 5= bask
+        max = 6
 
     before(async () => {
         accounts = await ethers.getSigners();
         user = accounts[0];
         attacker = accounts[10];
+        strategies = [];
     
         MockLiquidityMigration = await ethers.getContractFactory("MockLiquidityMigration");
         ERC1155 = await ethers.getContractFactory("Root1155");
@@ -42,16 +44,34 @@ describe('claimable', () => {
             before(async () => {
                 liquidityMigration = await MockLiquidityMigration.deploy();
                 erc1155 = await ERC1155.deploy(initialURI);
-                strategy = await MockStrategy.deploy(name, decimals)
+                for (let i = 0; i < protocols.length; i++) {
+                    strategies.push(await MockStrategy.deploy(name, decimals))
+                    strategies[i].mint(user.address, stake);
+                }
                 claimable = await Claimable.deploy(
                     liquidityMigration.address,
-                    erc1155.address
+                    erc1155.address,
+                    max
                 );
-                strategy.mint(user.address, stake)
             });
             tests();
         });
     }
+
+    const collectInitialize = async (name:string, tests:any) => {
+        describe(name, () => {
+            before(async () => {
+                await erc1155.create(
+                    claimable.address,
+                    supply,
+                    initialURI,
+                    "0x"
+                )
+            });
+            tests();
+        });
+    }
+
     initialize('deployed', () => {
         describe('validate set constructor', () => {
             it('collection valid', async () => {
@@ -131,9 +151,11 @@ describe('claimable', () => {
         });
     });
     describe('claim', () => {
+        let staked: any[];
+        let protocol = protocols[0];
         initialize('non-functional', () => {
             it('revert when incorrect state', async () => {
-                await expect(claimable.claim(strategy.address))
+                await expect(claimable.claim(strategies[0].address))
                 .to.be.revertedWith('Claimable#onlyState: ONLY_STATE_ALLOWED')
             });
             describe('active state', () => {
@@ -145,36 +167,43 @@ describe('claimable', () => {
                     .to.be.revertedWith('Claimable#claim: empty address')
                 });
                 it('revert when no stake', async () => {
-                    await expect(claimable.claim(strategy.address))
+                    await expect(claimable.claim(strategies[0].address))
                     .to.be.revertedWith('Claimable#claim: Has not staked')
                 });
-                // describe('has staked', () => {
-                //     before(async () => {
-                //         await strategy.approve(liquidityMigration.address, stake)
-                //         await liquidityMigration.stake(strategy.address, (stake/(protocols.length-1)), protocols[0])
-                //     });
-                //     it('', () => {
-                        
-                //     });
-                // });
+                describe('has staked', () => {
+                    before(async () => {
+                        await strategies[0].approve(liquidityMigration.address, stake)
+                        await liquidityMigration.stake(strategies[0].address, stake, protocol)
+                    });
+                    it('no NFTs avail', async () => {
+                        await expect(claimable.claim(strategies[0].address))
+                        .to.be.revertedWith('Claimable#claim: no NFTs left')
+                    });
+                    collectInitialize('collec init + state change', () => {
+                        before(async () => {
+                            await claimable.claim(strategies[0].address)
+                        });
+                        it('revert when already claimed', async () => {
+                            await expect(claimable.claim(strategies[0].address))
+                            .to.be.revertedWith('Claimable#claim: already claimed')
+                        });
+                    });
+                });
             });
         });
         initialize('functional', () => {
             describe('approve migration', () => {
                 before(async() => {
-                    await strategy.approve(liquidityMigration.address, stake)
+                    await strategies[0].approve(liquidityMigration.address, stake)
                 });
                 it('approval set', async () => {
-                    expect(await strategy.allowance(user.address, liquidityMigration.address))
+                    expect(await strategies[0].allowance(user.address, liquidityMigration.address))
                     .to.equal(stake)
                 });
                 describe('stake', () => {
-                    let staked: any[];
-                    let protocol = protocols[0];
-                    let amount = stake/(protocols.length-1);
                     before(async () => {
-                        await liquidityMigration.stake(strategy.address, amount, protocol)
-                        staked = await liquidityMigration.hasStaked(user.address, strategy.address)
+                        await liquidityMigration.stake(strategies[0].address, stake, protocol)
+                        staked = await liquidityMigration.hasStaked(user.address, strategies[0].address)
                     });
                     it('staked bool', async () => {
                         expect(staked[0]).to.equal(true)
@@ -182,15 +211,7 @@ describe('claimable', () => {
                     it('amount valid', async () => {
                         expect(staked[1]).to.equal(protocol)
                     });
-                    describe('collection initialized', async () => {
-                        before(async () => {
-                            await erc1155.create(
-                                claimable.address,
-                                supply,
-                                initialURI,
-                                "0x"
-                            )
-                        });
+                    collectInitialize('collection initialized', async () => {
                         it('claimable balance', async () => {
                             expect(await erc1155.balanceOf(claimable.address, protocol))
                             .to.equal(supply)
@@ -201,7 +222,7 @@ describe('claimable', () => {
                             });
                             describe('claim', () => {
                                 before(async () => {
-                                    await claimable.claim(strategy.address)
+                                    await claimable.claim(strategies[0].address)
                                 });
                                 it('user balance', async () => {
                                     expect(await erc1155.balanceOf(user.address, protocol))
@@ -222,4 +243,77 @@ describe('claimable', () => {
             });
         });
     })
+    describe('set up claimAll + master', () => {
+        initialize('functional', () => {
+            describe('do it', () => {
+                let strategyAddr: String[];
+                strategyAddr = [];
+                before(async () => {
+                    await claimable.stateChange(state[1])
+                    for (let i = 0; i < protocols.length; i++) {
+                        await strategies[i].approve(liquidityMigration.address, stake)
+                        await liquidityMigration.stake(strategies[i].address, stake, protocols[i])
+                        await erc1155.create(
+                            claimable.address,
+                            supply,
+                            initialURI,
+                            "0x"
+                        )
+                        strategyAddr.push(strategies[i].address);
+                    }
+                });
+                describe('claim all', () => {
+                    before(async () => {
+                        // console.log(await claimable.max())
+                        await claimable.claimAll(strategyAddr)
+                    });
+                    it('balances updated', async () => {
+                        for (let i = 0; i < protocols.length; i++) {
+                            expect(await erc1155.balanceOf(user.address, protocols[i]))
+                            .to.equal(1)
+                            expect(await erc1155.balanceOf(claimable.address, protocols[i]))
+                            .to.equal(supply-1)
+                        }
+                    });
+                    it('claimed updated', async () => {
+                        for (let i = 0; i < protocols.length; i++) {
+                            expect(await claimable.claimed(user.address, protocols[i]))
+                            .to.equal(true)
+                        }
+                    });
+                    describe('master NFT deployed', () => {
+                        before(async () => {
+                            await erc1155.create(
+                                claimable.address,
+                                supply,
+                                initialURI,
+                                "0x"
+                            )
+                        });
+                        it('master deployed', async () => {
+                            expect(await erc1155.getMaxTokenID()-1)
+                            .to.equal(await claimable.max())
+                        });
+                        describe('master claim', () => {
+                            before(async () => {
+                                await claimable.master()
+                            });
+                            it('user balance', async () => {
+                                expect(await erc1155.balanceOf(user.address, max))
+                                .to.equal(1)
+                            });
+                            it('claimable blanace', async () => {
+                                expect(await erc1155.balanceOf(claimable.address, max))
+                                .to.equal(supply-1)
+                            });
+                            it('claimed updated', async () => {
+                                expect(await claimable.claimed(user.address, protocols.length))
+                                .to.equal(true)
+                            });
+                        });
+                    });
+                })
+            })
+        });
+    });
 });
