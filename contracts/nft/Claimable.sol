@@ -82,8 +82,6 @@ contract Claimable is Ownable, ERC1155Holder {
     {
         require(!claimed[msg.sender][max], "Claimable#master: claimed");
         for (uint256 i = 0; i < max; i++) {
-            // console.log('protocol',i);
-            // console.log('claimed',claimed[msg.sender][i]);
             require(claimed[msg.sender][i], "Claimable#master: not all");
             require(IERC1155(collection).balanceOf(msg.sender, i) > 0, "Claimable#master: not holding");
         }
@@ -94,10 +92,6 @@ contract Claimable is Ownable, ERC1155Holder {
     function claimAll(address[] memory _strategy)
         public
     {
-        // passing in 6, max is 6
-        // 5 slots used
-        // 
-        console.log('strategy.length', _strategy.length);
         require(_strategy.length <= max, "Claimable#master: incorrect length");
         for (uint256 i = 0; i < _strategy.length; i++) {
             claim(_strategy[i]);
