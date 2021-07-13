@@ -4,6 +4,8 @@ import { expect } from "chai";
 import { Contract, ContractFactory } from "ethers";
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { initial } from "underscore";
+import { TASK_COMPILE_SOLIDITY_LOG_COMPILATION_RESULT } from "hardhat/builtin-tasks/task-names";
+import { ConstructorFragment } from "ethers/lib/utils";
 
 
 describe('claimable', () => {
@@ -287,6 +289,23 @@ describe('claimable', () => {
                     }
                 });
             })
+            describe('non-functional', () => {
+                let greater: String[] = []
+                let deployed: Contract[] = []
+                describe('deploy additonal strategy', () => {
+                    before(async () => {
+                        for (let i = 0; i < 2; i++) {
+                            deployed.push(await MockStrategy.deploy(name, decimals))
+                            greater.push(deployed[i].address)
+                        }
+                        greater.push(...strategyAddr)
+                    });
+                    it('revert over pass', async () => {
+                        await expect(claimable.claimAll(greater))
+                        .to.be.revertedWith('Claimable#master: incorrect length')
+                    });
+                });
+            });
         })
     })
     describe('master', () => {
@@ -354,19 +373,48 @@ describe('claimable', () => {
             });
         });
     });
+    initialize('wipe', () => {
+        let start =  0,
+            end = max;
+
+        describe('non-functional', () => {
+            it('reverts when not from owner', async () => {
+                await expect(claimable.connect(attacker).wipe(start, end))
+                .to.be.revertedWith('Ownable: caller is not the owner')
+            });
+            it('revert mix numbers', async () => {
+                await expect(claimable.wipe(end, start))
+                .to.be.revertedWith('Claimable#Wipe: range out')
+            });
+            it('revert greater than max', async () => {
+                await expect(claimable.wipe(start, (end+1)))
+                .to.be.revertedWith('Claimable#Wipe: out of bounds')
+            });
+        });
+        describe('functional', () => {
+            describe('NFTs', () => {
+                before(async () => {
+                    for (let i = 0; i < max; i++) {
+                        await erc1155.create(
+                            claimable.address,
+                            supply,
+                            initialURI,
+                            "0x"
+                        )
+                    }
+                });
+                describe('wipe it', () => {
+                    before(async () => {
+                        await claimable.wipe(start, end)
+                    });
+                    it('balance updated', async () => {
+                        for (let i = 0; i < max; i++) {
+                            expect(await erc1155.balanceOf(user.address, i))
+                            .to.equal(0)
+                        }
+                    });
+                });
+            });
+        });
+    });
 });
-
-
-        // describe('non-functional', () => {
-        //     let wild:Contract,
-        //         over: String[]
-        //     over = strategyAddr;
-        //     before(async () => {
-        //         wild = await MockStrategy.deploy(name, decimals);
-        //         over.push(wild.address)
-        //     });
-        //     it('revert when out of range', async () => {
-        //         await expect(claimable.claimAll(over))
-        //         .to.be.revertedWith('Claimable#master: incorrect length')
-        //     });
-        // });

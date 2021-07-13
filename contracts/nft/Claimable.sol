@@ -19,19 +19,6 @@ contract Claimable is Ownable, ERC1155Holder {
     address public migration;
     address public collection;
 
-    /*
-        Collection:
-            - 7 length
-            - [0, 1, 2, 3, 4, 5, 6]
-            - including master
-        Max:
-            - 7: including master
-            - 6: not including master
-        Protocols:
-            - 6 length
-            - [0, 1, 2, 3, 4, 5]
-    */
-
     mapping (address => mapping (uint256 => bool)) public claimed;
 
     event Claimed(address indexed account, uint256 protocol);
@@ -89,6 +76,11 @@ contract Claimable is Ownable, ERC1155Holder {
         IERC1155(collection).safeTransferFrom(address(this), msg.sender, max, 1, "");
     }
 
+    /**
+     * @notice claim all through range
+     * @param _strategy[] array of strategy addresses
+     */
+
     function claimAll(address[] memory _strategy)
         public
     {
@@ -101,17 +93,18 @@ contract Claimable is Ownable, ERC1155Holder {
     /**
      * @notice we wipe it, and burn all - should have got in already
      */
-    function wipe(uint256 _start, uint256 _end, uint8 _id)
+    function wipe(uint256 _start, uint256 _end)
         public
         onlyOwner
     {
+        require(_start < _end, "Claimable#Wipe: range out");
         require(_end <= max, "Claimable#Wipe: out of bounds");
-        for (uint256 start = _start; start < _end; start++) {
+        for (uint256 start = _start; start <= _end; start++) {
             IRoot1155(collection).
             burn(
                 address(this), 
                 start,
-                IERC1155(collection).balanceOf(address(this), _id)
+                IERC1155(collection).balanceOf(address(this), start)
             );
         }
     }
