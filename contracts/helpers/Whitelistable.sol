@@ -25,14 +25,14 @@ abstract contract Whitelistable is Ownable {
 
     /**
     * @dev add pool token to whitelist
-    * @param _token pool address
+    * @param _lp pool address
     */
-    function add(address _token) 
+    function add(address _lp) 
         public 
         onlyOwner 
     {
-        _add(_token);
-        addToUnderlyingTokenMapping(_token);
+        _add(_lp);
+        addToUnderlyingTokenMapping(_lp);
     }
 
     /**
@@ -51,14 +51,14 @@ abstract contract Whitelistable is Ownable {
 
     /**
     * @dev remove pool token from whitelist
-    * @param _token pool address
+    * @param _lp pool address
     */
-    function remove(address _token) 
+    function remove(address _lp) 
         public
         onlyOwner
     {
-        _remove(_token);
-        removeFromUnderlyingTokenMapping(_token);
+        _remove(_lp);
+        removeFromUnderlyingTokenMapping(_lp);
     }
 
     /**
@@ -75,21 +75,19 @@ abstract contract Whitelistable is Ownable {
         }
     }
 
-    function _add(address _token) 
+    function _add(address _lp) 
         internal
     {
-        whitelisted[_token] = true;
-        emit Added(_token);
+        require(!whitelisted[_lp], 'Whitelistable#_add: exists');
+        whitelisted[_lp] = true;
+        emit Added(_lp);
     }
 
-    function _remove(address _token) 
+    function _remove(address _lp) 
         internal
     {
-        require(whitelisted[_token], 'Whitelistable#_Remove: not exist');
-        whitelisted[_token] = false;
-        emit Removed(_token);
+        require(whitelisted[_lp], 'Whitelistable#_remove: not exist');
+        whitelisted[_lp] = false;
+        emit Removed(_lp);
     }
-
-    function addToUnderlyingTokenMapping(address _token) internal virtual;
-    function removeFromUnderlyingTokenMapping(address _token) internal virtual;
 }

@@ -77,21 +77,31 @@ contract TokenSetAdapter is IAdapter {
         return whitelisted[_lp];
     }
 
-    function addToUnderlyingTokenMapping(address _lp) internal override {
-        address[] memory underlyingTokens = outputTokens(_lp);
-        for (uint256 i = 0; i < underlyingTokens.length; i++) {
-            address utAddress = underlyingTokens[i];
-            underlyingTokenInTheLp[_lp][utAddress] = true;
-        }
-        numberOfUnderlyingTokens[_lp] = underlyingTokens.length;
+    function add(address _lp)
+        public
+        onlyOwner
+    {
+        _addEntry(address _lp);
     }
 
-    function removeFromUnderlyingTokenMapping(address _lp) internal override {
-        address[] memory underlyingTokens = outputTokens(_lp);
-        for (uint256 i = 0; i < underlyingTokens.length; i++) {
-            address utAddress = underlyingTokens[i];
-            underlyingTokenInTheLp[_lp][utAddress] = false;
-        }
-        numberOfUnderlyingTokens[_lp] = 0;
+    function remove(address _lp)
+        public
+        onlyOwner
+    {
+        _removeEntry(address _lp);
+    }
+
+    function _addEntry(address _lp)
+        internal
+    {
+        _add(_lp);
+        _addUnderlying(_lp, outputTokens(_lp););
+    }
+
+    function _removeEntry(address _lp) 
+        internal
+    {
+        _remove(_lp);
+        _removeUnderlying(_lp);
     }
 }

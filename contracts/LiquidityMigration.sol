@@ -185,6 +185,6 @@ contract LiquidityMigration is Timelocked, StrategyTypes {
         require(adapters[_adapter], "LiquidityMigration#updateAdapter: does not exist");
         adapters[_adapter] = false;
     }
-        // function emergencyDrain() {}
+    // function emergencyDrain() {}
 }
 
