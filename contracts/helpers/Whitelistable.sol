@@ -7,10 +7,10 @@ pragma solidity 0.8.2;
 
 abstract contract Whitelistable is Ownable {
 
-    mapping(address => bool) public whitelisted;
+    mapping(address => bool) private whitelisted;
     
-    mapping (address => uint256) public count;
-    mapping (address => mapping (address => bool)) public underlying;
+    mapping (address => uint256) private count;
+    mapping (address => mapping (address => bool)) private underlying;
 
     event Added(address token);
     event Removed(address token);
@@ -19,66 +19,27 @@ abstract contract Whitelistable is Ownable {
     * @dev Require adapter registered
     */
     modifier onlyWhitelisted(address _lp) {
-        require(whitelisted[_lp], "Whitelistable#onlyWhitelisted: not whitelisted lp");
+        require(isWhitelisted(_lp), "Whitelistable#onlyWhitelisted: not whitelisted lp");
         _;
     }
 
     /**
-    * @dev add pool token to whitelist
-    * @param _lp pool address
+    * @param _lp to view pool token
+    * @return if token in whitelist
     */
-    function add(address _lp) 
-        public 
-        onlyOwner 
-    {
-        _add(_lp);
-        addToUnderlyingTokenMapping(_lp);
-    }
-
-    /**
-    * @dev batch add pool token to whitelist
-    * @param _tokens[] array of pool address
-    */
-    function addBatch(address[] memory _tokens)
+    function isWhitelisted(address _lp) 
         public
-        onlyOwner
+        view
+        override
+        returns(bool)
     {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            _add(_tokens[i]);
-            addToUnderlyingTokenMapping(_tokens[i]);
-        }
+        return whitelisted[_lp];
     }
 
-    /**
-    * @dev remove pool token from whitelist
-    * @param _lp pool address
-    */
-    function remove(address _lp) 
-        public
-        onlyOwner
-    {
-        _remove(_lp);
-        removeFromUnderlyingTokenMapping(_lp);
-    }
-
-    /**
-    * @dev batch remove pool token from whitelist
-    * @param _tokens[] array of pool address
-    */
-    function removeBatch(address[] memory _tokens)
-        public
-        onlyOwner
-    {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            _remove(_tokens[i]);
-            removeFromUnderlyingTokenMapping(_tokens[i]);
-        }
-    }
-
-    function _add(address _lp) 
+    function _add(address _lp)
         internal
     {
-        require(!whitelisted[_lp], 'Whitelistable#_add: exists');
+        require(!isWhitelisted(_lp), 'Whitelistable#_add: exists');
         whitelisted[_lp] = true;
         emit Added(_lp);
     }
@@ -86,8 +47,29 @@ abstract contract Whitelistable is Ownable {
     function _remove(address _lp) 
         internal
     {
-        require(whitelisted[_lp], 'Whitelistable#_remove: not exist');
+        require(isWhitelisted(_lp), 'Whitelistable#_remove: not exist');
         whitelisted[_lp] = false;
         emit Removed(_lp);
+    }
+
+    function _addUnderlying(address _lp, address[] memory _underlying) 
+        internal
+    {
+        require(count[_lp] == 0, 'Whitelistable#_addUnderlying: exists');
+        for (uint256 i = 0; i < _underlying.length; i++) {
+            underlying[_lp][underlying[i]] = true;
+        }
+        count[_lp] = underlying.length;
+    }
+
+    function _removeUnderlying(address _lp, address[] memory _underlying)
+        internal
+    {
+        require(count[_lp] > 0, 'Whitelistable#_removeUnderlying: not exist');
+        require(count == _underlying.length, 'Whitelistable#_removeUnderlying: incorrect length');
+        for (uint256 i = 0; i < count[_lp]; i++) {
+            delete underlying[_lp][_underlying[i]];
+        }
+        delete count[_lp];
     }
 }
