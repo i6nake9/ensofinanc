@@ -20,9 +20,14 @@ export class TokenSetEnvironmentBuilder {
     this.signer = signer;
     this.enso = enso;
   }
-  async connect(tokenSetsIssuanceModule: string, tokenSetPoolAddress: string): Promise<TokenSetEnvironment> {
+  async connect(tokenSetsIssuanceModule: string, debtTokenSetPoolAddress: string, tokenSetPoolAddress: string, ): Promise<TokenSetEnvironment> {
     const setBasicIssuanceModule = (await BasicIssuanceModule__factory.connect(
       tokenSetsIssuanceModule,
+      this.signer,
+    )) as BasicIssuanceModule;
+
+    const debtSetBasicIssuanceModule = (await BasicIssuanceModule__factory.connect(
+      debtTokenSetPoolAddress,
       this.signer,
     )) as BasicIssuanceModule;
 
@@ -34,7 +39,7 @@ export class TokenSetEnvironmentBuilder {
 
     const generiRouter: string = this.enso?.routers[0]?.contract?.address || ethers.constants.AddressZero
     // deploying the DPI Adapter
-    const adapter = await tokenSetAdapterFactory.deploy(setBasicIssuanceModule.address, generiRouter, signerAddress);
+    const adapter = await tokenSetAdapterFactory.deploy(setBasicIssuanceModule.address, debtSetBasicIssuanceModule.address, generiRouter, signerAddress);
 
     const addresses = TOKENSET_HOLDERS[tokenSetPoolAddress];
     if (addresses === undefined) {

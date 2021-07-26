@@ -24,6 +24,7 @@ describe("DPI: Unit tests", function () {
 
     this.DPIEnv = await new TokenSetEnvironmentBuilder(this.signers.default, this.ensoEnv).connect(
       TOKENSET_ISSUANCE_MODULES[FACTORY_REGISTRIES.DPI],
+      TOKENSET_ISSUANCE_MODULES[FACTORY_REGISTRIES.ETH_2X_FLEXIBLE_LEVERAGE_INDEX],
       FACTORY_REGISTRIES.DPI,
     );
 
