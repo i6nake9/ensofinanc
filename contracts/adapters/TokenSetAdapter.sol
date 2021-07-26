@@ -3,9 +3,9 @@ pragma solidity 0.8.2;
 
 import { SafeERC20, IERC20 } from "../ecosystem/openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import "./AbstractAdapter.sol";
-// import "../helpers/Whitelistable.sol";
 
 interface ISetToken {
+    function moduleStates(address _module) external view returns (uint);
     function getComponents() external view returns (address[] memory);
 }
 
@@ -22,14 +22,17 @@ contract TokenSetAdapter is AbstractAdapter {
 
     address public generic;
     ISetModule public setModule;
+    ISetModule public debtSetModule;
 
     constructor(
         ISetModule setModule_,
+        ISetModule debtSetModule_,
         address generic_,
         address owner_
     ) AbstractAdapter(owner_)
     {
         setModule = setModule_;
+        debtSetModule = debtSetModule_;
         generic = generic_;
     }
 
@@ -49,10 +52,23 @@ contract TokenSetAdapter is AbstractAdapter {
         onlyWhitelisted(_lp)
         returns(Call memory call)
     {
+
+        // we are getting the _lp over in this fx call
+        // if the _lp is a debt one then we will have to redeem in the debtSetModule
+        // otherwise it should call the setModule
+        // the way to do it is that we should get the modules from the _lp and if that array debtSetModule, use that else confirm that it has the setModule and then use that.
+        ISetModule module;
+        if (ISetToken(_lp).moduleStates(address(setModule)) == 2) {
+            require (ISetToken(_lp).moduleStates(address(debtSetModule)) == 0);
+            module = setModule;
+        } else if (ISetToken(_lp).moduleStates(address(debtSetModule)) == 2) {
+            require (ISetToken(_lp).moduleStates(address(setModule)) == 0);
+            module = debtSetModule;
+        }
         call = Call(
-            payable(address(setModule)),
+            payable(address(module)),
             abi.encodeWithSelector(
-                setModule.redeem.selector,
+                module.redeem.selector,
                 _lp,
                 _amount,
                 generic
