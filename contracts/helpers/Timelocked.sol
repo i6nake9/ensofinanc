@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: WTFPL
 
-import "./Ownable.sol";
+import "../ecosystem/openzeppelin/access/Ownable.sol";
 
 pragma solidity 0.8.2;
 

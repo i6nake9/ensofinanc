@@ -1,4 +1,4 @@
-import "../helpers/Ownable.sol";
+import "../ecosystem/openzeppelin/access/Ownable.sol";
 
 
 // SPDX-License-Identifier: WTFPL

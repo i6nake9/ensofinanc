@@ -47,10 +47,9 @@ contract LiquidityMigration is Timelocked, StrategyTypes {
         IStrategyProxyFactory factory_,
         address controller_,
         uint256 _unlock,
-        uint256 _modify,
-        address _owner
+        uint256 _modify
     )
-        Timelocked(_unlock, _modify, _owner)
+        Timelocked(_unlock, _modify, msg.sender)
     {
         for (uint256 i = 0; i < adapters_.length; i++) {
             adapters[adapters_[i]] = true;
