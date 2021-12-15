@@ -19,6 +19,7 @@ contract MigrationController is IMigrationController, StrategyTypes, StrategyCon
 
   address internal immutable _liquidityMigration;
   address internal immutable _ensoManager;
+  address internal immutable _migrationCoordinator;
 
   event Withdraw(address indexed strategy, address indexed account, uint256 value, uint256 amount);
   event Deposit(address indexed strategy, address indexed account, uint256 value, uint256 amount);
@@ -28,9 +29,10 @@ contract MigrationController is IMigrationController, StrategyTypes, StrategyCon
   event StrategyOpen(address indexed strategy, uint256 performanceFee);
   event StrategySet(address indexed strategy);
 
-  constructor(address liquidityMigration, address ensoManager) public {
+  constructor(address liquidityMigration, address ensoManager, address migrationCoordinator) public {
       _liquidityMigration = liquidityMigration;
       _ensoManager = ensoManager;
+      _migrationCoordinator = migrationCoordinator;
   }
 
   function migrate(
@@ -50,23 +52,32 @@ contract MigrationController is IMigrationController, StrategyTypes, StrategyCon
   function finalizeMigration(
       IStrategy strategy,
       IStrategyRouter genericRouter,
-      IAdapter migrationAdapter,
       IERC20 lpToken
+      IAdapter adapter
   ) external override {
       require(msg.sender == _ensoManager, "Wrong sender");
-      require(migrationAdapter.isWhitelisted(address(lpToken)), "Not whitelist");
+      require(adapter.isWhitelisted(address(lpToken)), "Not whitelist");
       uint256 balance = lpToken.balanceOf(address(strategy));
       require(balance > 0, "Wrong LP");
       strategy.approveToken(address(lpToken), address(this), balance);
       lpToken.safeTransferFrom(address(strategy), address(genericRouter), balance);
       bytes memory migrationData =
-          abi.encode(migrationAdapter.encodeMigration(
+          abi.encode(adapter.encodeMigration(
             address(genericRouter),
             address(strategy),
             address(lpToken),
             balance)
           );
       genericRouter.deposit(address(strategy), migrationData);
+  }
+
+  function initializeTokenValue(
+      IStrategy strategy,
+      IERC20 lpToken,
+      IAdapter adapter
+  ) external override {
+      require(msg.sender == _migrationCoordinator, "Wrong sender");
+
   }
 
   function setupStrategy(

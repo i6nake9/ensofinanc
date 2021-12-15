@@ -215,8 +215,8 @@ describe("Batch: Unit tests", function () {
     const tx = await migrationController.connect(signers.admin).finalizeMigration(
       dpiStrategy.address,
       enso.routers[0].contract.address,
-      indexCoopAdapter.address, //Note this is the current adapter address, not mock. We will reused the migration encoding
-      dpiPoolAddress
+      dpiPoolAddress,
+      indexCoopAdapter.address //Note this is the current adapter address, not mock. We will reused the migration encoding
     )
     const receipt = await tx.wait()
     console.log('Finalize Migrate Gas Used: ', receipt.gasUsed.toString())

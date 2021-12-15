@@ -57,8 +57,8 @@ contract MockController is StrategyTypes, StrategyControllerStorage {
   function finalizeMigration(
       IStrategy strategy,
       IStrategyRouter genericRouter,
-      IAdapter migrationAdapter,
-      IERC20 lpToken
+      IERC20 lpToken,
+      IAdapter adapter
   ) external {
       require(msg.sender == _ensoManager, "Wrong sender");
       uint256 balance = lpToken.balanceOf(address(strategy));
@@ -66,7 +66,7 @@ contract MockController is StrategyTypes, StrategyControllerStorage {
       strategy.approveToken(address(lpToken), address(this), balance);
       lpToken.safeTransferFrom(address(strategy), address(genericRouter), balance);
       bytes memory migrationData =
-          abi.encode(migrationAdapter.encodeMigration(address(genericRouter), address(strategy), address(lpToken), balance));
+          abi.encode(adapter.encodeMigration(address(genericRouter), address(strategy), address(lpToken), balance));
       genericRouter.deposit(address(strategy), migrationData);
   }
 
